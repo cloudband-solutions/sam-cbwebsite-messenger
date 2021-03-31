@@ -5,35 +5,54 @@ Description: >
 
   Sample SAM Template for sam-cbwebsite-messenger
 
+Parameters:
+  Environment:
+    Type: String
+    AllowedValues:
+      - stage
+      - main
+      - test
+      - develop
+    Default: develop
+    Description: State that can be added to resource names
+
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
-    Timeout: 3
+    Timeout: 25
+    Runtime: python3.8
+    Environment:
+      Variables:
+        TOPIC_ARN: arn:aws:sns:ap-southeast-1:428846808097:CbwebsiteMessenger
+  Api:
+    Cors:
+      AllowOrigin: "'*'"
+      AllowHeaders: "'*'"
 
 Resources:
+  RestApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: CBMessenger
+      Cors:
+        AllowOrigin: "'*'"
+        AllowHeaders: "'*'"
+      StageName: !Ref Environment
+
   CbWebsiteMessengerFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Type: AWS::Serverless::Function
     Properties:
       CodeUri: cbwebsite-messenger/
       Handler: app.lambda_handler
-      Runtime: python3.8
       Events:
         CbWebsiteMessenger:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Type: Api
           Properties:
             Path: /contact
             Method: post
+            RestApiId: !Ref RestApi
 
 Outputs:
-  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
-  # Find out more about other implicit resources you can reference within SAM
-  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
   CbWebsiteMessengerApi:
     Description: "API Gateway endpoint URL for Prod stage for Hello World function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/contact/"
-  CbWebsiteMessengerFunction:
-    Description: "Hello World Lambda Function ARN"
-    Value: !GetAtt CbWebsiteMessengerFunction.Arn
-  CbWebsiteMessengerFunctionIamRole:
-    Description: "Implicit IAM Role created for Hello World function"
-    Value: !GetAtt CbWebsiteMessengerFunctionRole.Arn
+    Value: !Sub "https://${RestApi}.execute-api.${AWS::Region}.amazonaws.com"

@@ -2,65 +2,50 @@ import json
 import boto3
 import os
 
-def validate_parameters(event):
+def validate_parameters(params):
   errors  = []
 
-  if not event.get("name"):
-    errors.append("name key is required")
-  elif not event["name"]:
+  if not params.get("name"):
     errors.append("name cannot be blank")
 
-  if not event.get("email"):
-    errors.append("email key is required")
-  elif not event["email"]:
+  if not params.get("email"):
     errors.append("email cannot be blank")
 
-  if not event.get("message"):
-    errors.append("message key is required")
-  elif not event["message"]:
+  if not params.get("message"):
     errors.append("message cannot be blank")
 
   return errors
 
 def lambda_handler(event, context):
-  """
-  Parameters
-  ----------
-  event: dict, required
-      API Gateway Lambda Proxy Input Format
 
-      Event doc: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format
+  if event.get("body"):
+    params = json.loads(event.get('body'))
 
-  context: object, required
-      Lambda Context runtime methods and attributes
-
-      Context doc: https://docs.aws.amazon.com/lambda/latest/dg/python-context-object.html
-
-  Returns
-  ------
-  API Gateway Lambda Proxy Output Format: dict
-
-      Return doc: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html
-  """
-
-  errors = validate_parameters(event)
+  if params:
+    errors = validate_parameters(params)
+  else:
+    errors = ["no data"]
 
   if len(errors) > 0:
     return {
       "statusCode": 401,
+      'headers': {
+        'Access-Control-Allow-Headers': '*',
+        'Access-Control-Allow-Origin': '*'
+      },
       "body": json.dumps({
         "message": "Invalid parameters",
         "errors": errors  
       })
     }
   else:
-    name    = event["name"]
-    email   = event["email"]
-    message = event["message"]
+    name    = params.get('name')
+    email   = params.get('email')
+    message = params.get('message')
 
     # Message Parameters
     subject   = "[CB_WEBSITE_MESSAGE] {} - {}".format(name, email)
-    topic_arn = "arn:aws:sns:ap-southeast-1:428846808097:CbwebsiteMessenger"
+    topic_arn = os.environ.get("TOPIC_ARN")
 
     sns_client  = boto3.client('sns')
     response    = sns_client.publish(
@@ -71,6 +56,10 @@ def lambda_handler(event, context):
 
     return {
       "statusCode": 200,
+      'headers': {
+        'Access-Control-Allow-Headers': '*',
+        'Access-Control-Allow-Origin': '*'
+      },
       "body": json.dumps({
         "message": "Success!"
       }),
