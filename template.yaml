@@ -28,6 +28,7 @@ Globals:
     Cors:
       AllowOrigin: "'*'"
       AllowHeaders: "'*'"
+      AllowMethods: "'*'"
 
 Resources:
   RestApi:
@@ -37,6 +38,7 @@ Resources:
       Cors:
         AllowOrigin: "'*'"
         AllowHeaders: "'*'"
+        AllowMethods: "'*'"
       StageName: !Ref Environment
 
   CbWebsiteMessengerFunction:
@@ -44,6 +46,7 @@ Resources:
     Properties:
       CodeUri: cbwebsite-messenger/
       Handler: app.lambda_handler
+      Role: arn:aws:iam::428846808097:role/developer-admin
       Events:
         CbWebsiteMessenger:
           Type: Api
@@ -55,4 +58,4 @@ Resources:
 Outputs:
   CbWebsiteMessengerApi:
     Description: "API Gateway endpoint URL for Prod stage for Hello World function"
-    Value: !Sub "https://${RestApi}.execute-api.${AWS::Region}.amazonaws.com"
+    Value: !Sub "https://${RestApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}"

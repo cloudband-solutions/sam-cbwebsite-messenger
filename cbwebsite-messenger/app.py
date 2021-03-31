@@ -17,6 +17,7 @@ def validate_parameters(params):
   return errors
 
 def lambda_handler(event, context):
+  params = None
 
   if event.get("body"):
     params = json.loads(event.get('body'))
@@ -31,36 +32,38 @@ def lambda_handler(event, context):
       "statusCode": 401,
       'headers': {
         'Access-Control-Allow-Headers': '*',
-        'Access-Control-Allow-Origin': '*'
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': '*'
       },
       "body": json.dumps({
         "message": "Invalid parameters",
         "errors": errors  
       })
     }
-  else:
-    name    = params.get('name')
-    email   = params.get('email')
-    message = params.get('message')
 
-    # Message Parameters
-    subject   = "[CB_WEBSITE_MESSAGE] {} - {}".format(name, email)
-    topic_arn = os.environ.get("TOPIC_ARN")
+  name    = params.get('name')
+  email   = params.get('email')
+  message = params.get('message')
 
-    sns_client  = boto3.client('sns')
-    response    = sns_client.publish(
-                    TopicArn=topic_arn,
-                    Message=message,
-                    Subject=subject
-                  ) 
+  # Message Parameters
+  subject   = "[CB_WEBSITE_MESSAGE] {} - {}".format(name, email)
+  topic_arn = os.environ.get("TOPIC_ARN")
 
-    return {
-      "statusCode": 200,
-      'headers': {
-        'Access-Control-Allow-Headers': '*',
-        'Access-Control-Allow-Origin': '*'
-      },
-      "body": json.dumps({
-        "message": "Success!"
-      }),
-    }
+  sns_client  = boto3.client('sns')
+  response    = sns_client.publish(
+                  TopicArn=topic_arn,
+                  Message=message,
+                  Subject=subject
+                ) 
+
+  return {
+    "statusCode": 200,
+    'headers': {
+      'Access-Control-Allow-Headers': '*',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': '*'
+    },
+    "body": json.dumps({
+      "message": "Success!"
+    }),
+  }
